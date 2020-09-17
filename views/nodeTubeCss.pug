@@ -34,7 +34,7 @@ style.
 
     .upload-title-text {
         max-height: 53px;
-        color: black;
+        color: #bcbcbc;
         font-size: 20px;
         text-align: center;
         margin: 0;
@@ -50,7 +50,7 @@ style.
     }
 
     .upload-user-text {
-        color: black;
+        color: #c7c7c7 !important;
         /*text-decoration:underline;*/
     }
 
@@ -146,10 +146,12 @@ style.
 
     .preview-image {
         width: inherit;
-        max-width: 324px;
-        height: 200px;
-        max-height: 200px;
+        max-width: 405px;
+        height: 210px;
+        max-height: 210px;
         border-radius: 7px;
+        max-width:100%;
+        /*border:1px solid white;*/
     }
 
     /* translate thing to make it centered even with overflow*/
@@ -261,4 +263,119 @@ style.
         /*color: #069;*/
         /*text-decoration: underline;*/
         cursor: pointer;
+    }
+
+    .headroom--pinned {
+        display: block;
+    }
+
+    .headroom--unpinned {
+        display: none;
+    }
+
+    .upload-thumbnail {
+        display: block;
+    }
+
+    .image-container {
+        display:inline-block;
+        border:1px solid #5b5a5a;
+        margin:0 auto;
+        overflow:hidden;
+        border-radius:13px;
+    }
+
+
+
+    .upload-thumbnail:hover {
+
+        /*transform: scale(1.05) translate(0px, 30px);*/
+
+        transform: scale(1.12);
+
+        -webkit-filter: brightness(120%);
+    }
+
+    .upload-thumbnail {
+        transition: transform .7s ease;
+    }
+
+    .holder {
+        overflow: hidden; /* [1.2] Hide the overflowing of child elements */
+        /*max-width:450px;*/
+    }
+
+    @media (max-width: 767px) {
+
+        .holder {
+            overflow: visible;
+        }
+    }
+
+    .plyr.plyr--video {
+        resize: both;
+
+        /*0.2*/
+        /*max-width: 97.5vw;*/
+        /*max-height: 98vh;*/
+
+        /*height: 82vh;*/
+
+        /* 0.1 */
+        /*width: 1409px;*/
+        /*height: 799px;*/
+    }
+
+    .container {
+
+    }
+
+    @media (min-width: 900px) {
+        .container {
+            width: inherit
+        }
+    }
+
+    @media (min-width: 1042px) {
+        .container {
+            width: inherit
+        }
+    }
+
+    @media (min-width: 1200px) {
+        .container {
+            width: inherit
+        }
+    }
+
+    .navbar-default .navbar-nav > li > a {
+        font-size: 16px;
+        /*font-weight:400;*/
+    }
+
+    .brandName {
+        font-family: inherit;
+    }
+
+    .display-element {
+        /*TODO: this should be the height of the */
+        /*max-height: 625px;*/
+
+        border: 1px solid #5b5a5a;
+
+    }
+
+    .editFileButtons {
+        margin-top: 30px;
+    }
+
+    /* anything below this width */
+    @media (min-width: 1250px) {
+        body {
+            zoom: 1.15;
+        }
+
+        /*.postButton {*/
+        /*display: none !important;*/
+        /*}*/
     }

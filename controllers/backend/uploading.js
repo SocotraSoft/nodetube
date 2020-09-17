@@ -9,6 +9,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const mkdirp = Promise.promisifyAll(require('mkdirp'));
 var randomstring = require('randomstring');
+var CombinedStream = require('combined-stream');
 
 const redisClient = require('../../config/redis');
 
@@ -30,6 +31,7 @@ const { b2, bucket, hostUrl } = require('../../lib/uploading/backblaze');
 const ffmpegHelper = require('../../lib/uploading/ffmpeg');
 const {
   markUploadAsComplete,
+  markConvertAsComplete,
   updateUsersUnreadSubscriptions,
   runTimeoutFunction,
   userCanUploadContentOfThisRating
@@ -41,6 +43,12 @@ const backblaze = require('../../lib/uploading/backblaze');
 var resumable = require('../../lib/uploading/resumable.js')(__dirname +  '/upload');
 
 const moderationUpdatesToDiscord = process.env.MODERATION_UPDATES_TO_DISCORD == 'true';
+
+process.on('warning', (warning) => {
+  console.warn(warning.name);    // Print the warning name
+  console.warn(warning.message); // Print the warning message
+  console.warn(warning.stack);   // Print the stack trace
+});
 
 const winston = require('winston');
 //
@@ -378,11 +386,20 @@ exports.postFileUpload = async(req, res) => {
           fileNameArray.push(`${uploadPath}/${x}`);
         }
 
-        // I feel like I pulled this into a promise once and it didn't work
+        var combinedStream = CombinedStream.create();
 
-        /** CONCATENATE FILES AND BEGIN PROCESSING **/
-        concat(fileNameArray, `${uploadPath}/convertedFile`, async function(err){
-          if(err)throw err;
+        for(const fileChunk of fileNameArray){
+          combinedStream.append(function(next){
+            next(fs.createReadStream(fileChunk));
+          });
+        }
+
+        combinedStream.pipe(fs.createWriteStream(`${uploadPath}/convertedFile`));
+
+        combinedStream.on('end', async function(){
+          /** CONCATENATE FILES AND BEGIN PROCESSING **/
+          // concat(fileNameArray, `${uploadPath}/convertedFile`, async function(err){
+          //   if(err)throw err;
 
           uploadLogger.info('Concat done', logObject);
 
@@ -399,8 +416,21 @@ exports.postFileUpload = async(req, res) => {
 
             codecName  = response.streams[0].codecName;
 
-            // TODO: what are the units of measurement here?
+            const width = response.streams[0].width;
+            const height = response.streams[0].height;
+
+            // bitrate in kbps
             bitrate = response.format.bit_rate / 1000;
+
+            upload.bitrateInKbps = bitrate;
+
+            upload.dimensions.height = height;
+            upload.dimensions.width = width;
+            upload.dimensions.aspectRatio = height/width;
+
+            console.log(response);
+            //
+            // console.log('')
 
             uploadLogger.info(`BITRATE: ${bitrate}`, logObject);
           }
@@ -474,6 +504,7 @@ exports.postFileUpload = async(req, res) => {
               fileInDirectory = `${saveAndServeFilesDirectory}/${channelUrl}/${uniqueTag}-old.mp4`;
             }
 
+            // if the file type is convert or it's over max bitrate
             if(upload.fileType == 'convert' || (bitrate > maxBitrate && fileExtension == '.mp4')){
               await ffmpegHelper.convertVideo({
                 uploadedPath: fileInDirectory,
@@ -504,7 +535,6 @@ exports.postFileUpload = async(req, res) => {
             }
 
             upload.fileType = 'video';
-
             upload = await upload.save();
           }
 
@@ -524,15 +554,98 @@ exports.postFileUpload = async(req, res) => {
 
           uploadLogger.info('Upload marked as complete', logObject);
 
-          updateUsersUnreadSubscriptions(user);
-
-          uploadLogger.info('Updated subscribed users subscriptions', logObject);
-
           if(!responseSent){
             responseSent = true;
             aboutToProcess(res, channelUrl, uniqueTag);
           }
+          /*
+          all values in Kbps (kilobits per seconds)
+          2160p (4k) -> 13000
+          1440p 6000
+          1080p 3000
+          720p 2250
+          480p 500
+          360p 400
+          240p 300
+          144p 80
+
+          0-80 144p
+          81-299 360p
+          */
+          // TODO: put qualities somewhere else
+          const qualities = [
+            { name: '256 x 144p', quality: 144, bitrate: 80 },
+            { name: '426 x 240p', quality: 240, bitrate: 300 },
+            { name: '640 x 360p', quality: 360, bitrate: 400 },
+            { name: '854 x 480p', quality: 480, bitrate: 500 },
+            { name: '1280 x 720p', quality: 720, bitrate: 2250 }
+          ];
+          // TODO: Do quality stuff
+          // TODO: loop quality stuff
+          // video will be available in original quality while this is happening in the background
+          // TODO: make a quality conversion counter/progress bar
+          for(var i = 0; i < qualities.length; i = i + 1){
+            if(bitrate >= qualities[i].bitrate){
+              // qualitySavePath = `${channelUrlFolder}/${uniqueTag}-${qualities[i].quality}.mp4`;
+
+              let qualityExists = upload.videoQualities.find(o => o.quality === qualities[i].quality);
+              if(!qualityExists){
+
+                upload.videoQualities.push({
+                  quality: qualities[i].quality,
+                  bitrate: qualities[i].bitrate,
+                  fileSizeInMb: 1,
+                  status: 'pending' // TODO: use enum here not string
+                });
+              }
+
+            }
+          }
+
+          await upload.save();
+
+          for(var i = 0; i < upload.videoQualities.length; i = i + 1){
+            if(bitrate >= upload.videoQualities[i].bitrate){
+              if(upload.videoQualities[i].status != 'complete'){
+                // TODO: this is kind of ugly lmao
+                qualitySavePath = `${channelUrlFolder}/${uniqueTag}-${upload.videoQualities[i].quality}.mp4`;
+
+                upload.videoQualities[i].status = 'converting';
+                // upload.videoQualities
+                await upload.save();
+                // await upload.save();
+                await ffmpegHelper.convertVideo({
+                  uploadedPath: fileInDirectory,
+                  title,
+                  bitrate: upload.videoQualities[i].bitrate,
+                  savePath: qualitySavePath,
+                  uniqueTag: uniqueTag + '-' + upload.videoQualities[i].quality,
+                  quality: upload.videoQualities[i].quality
+                });
+
+                upload.videoQualities[i].status = 'complete';
+              }
+
+              await upload.save();
+            }
+            // else {
+            //   // do max possible conversion with the biggest bitrate left? then break;
+            //   break;
+            // }
+
+          }
+
+          await markConvertAsComplete(uniqueTag, channelUrl, user);
+
+          uploadLogger.info('Quality all qualities are converted', logObject);
+
+          updateUsersUnreadSubscriptions(user);
+
+          uploadLogger.info('Updated subscribed users subscriptions', logObject);
+
         });
+
+        // });
       }
     });
   } catch(err){

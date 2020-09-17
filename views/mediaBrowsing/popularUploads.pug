@@ -2,6 +2,8 @@ extends ../layout
 
 block content
 
+
+    // the element with the anchor links for 'Last Hour' , 'Last Day', etc
     div.container
         include ../viewPartials/popularUploadsNavbar
 
@@ -51,7 +53,7 @@ block content
 
 
                 each upload in uploads
-                    div.col-xs-12.col-sm-6.col-md-6.col-lg-4(style="text-align:center;height:353px;")
+                    div.col-xs-12.col-sm-6.col-md-6.col-lg-4(style="text-align:center;height:340px;margin-bottom:34px;")
 
                         include ../viewPartials/uploadThumbnail
 
@@ -171,7 +173,7 @@ block content
 
     include ../viewPartials/changeSensitivityFilterJs
 
-    script.
-      balanceText();
+    //script.
+    //  balanceText();
 
     include ../viewPartials/mouseOverJavascript

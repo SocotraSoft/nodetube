@@ -10,14 +10,14 @@ html
     meta(name="description", content=meta.description)
 
     // TODO: kind of want to remove the - Brandname, it doesn't look great
-    meta(property='og:title', content=(meta.title || title) + ` - ${brandName}`)
+    meta(property='og:title', content=(meta.title || title))
     meta(property='og:image', content=meta.image)
     meta(property='og:description', content=meta.description)
     meta(property='og:video', content=meta.video)
 
 
     meta(name='twitter:card', content='summary')
-    meta(name='twitter:title', content=(meta.title || title) + ` - ${brandName}`)
+    meta(name='twitter:title', content=(meta.title || title))
     meta(name='twitter:description', content=meta.description || "An open-source file hosting platform")
     meta(name='twitter:image', content=meta.image)
 
@@ -35,9 +35,12 @@ html
     script(src='/js/lib/jquery-3.1.1.min.js')
     script(src='/js/lib/bootstrap.min.js')
 
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js")
     script(src='https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js')
     script(src='https://cdnjs.cloudflare.com/ajax/libs/balance-text/3.2.0/balancetext.min.js')
     script(src='https://cdn.jsdelivr.net/npm/sweetalert2@7.33.1/dist/sweetalert2.js')
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/jquery.nicescroll/3.7.6/jquery.nicescroll.min.js')
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/enquire.js/2.0.1/enquire.min.js')
 
     link(rel='stylesheet', href='/css/loading-bar.css')
     script(src='/js/loading-bar.js')
@@ -53,19 +56,24 @@ html
 
 
   body(style="overflow-x:hidden;touch-action: manipulation;" id="body" class="dark-mode")
+
+
     include nodeTubeCss
 
 
     //layout.pug
-    include partials/header
+    include layoutPartials/header
 
+    // I feel like this is here and breaks if you move it
     include viewPartials/darkLightMode
 
-    .container(style="max-width:100%;padding-left: 0px; padding-right: 0px;")
-      include partials/flash
+    .container(style="max-width:1250px;padding-left: 0px; padding-right: 0px;margin-top:3px;")
+      include layoutPartials/sidebar
+
+      include layoutPartials/flash
       block content
 
-    include partials/footer
+    include layoutPartials/footer
 
     if zopimOn
       include widgets/zopim
@@ -74,10 +82,65 @@ html
       include widgets/google-analytics
 
 
-
     script(src='/js/main.js')
 
     block extra_footer_js
+
+      script.
+        var accountOpen = false;
+
+        function toggleAccount() {
+          // account closed, open div
+          if (!accountOpen) {
+            document.getElementById("accountDropdown").style.display = "";
+            accountOpen = true;
+
+            // account open, close div
+          } else if (accountOpen) {
+            document.getElementById("accountDropdown").style.display = "none";
+
+            accountOpen = false;
+          }
+        }
+
+
+      script.
+          var sidebarClosed = true;
+
+          function toggleNav() {
+            if (sidebarClosed) {
+              document.getElementById("mySidebar").style.width = "253px";
+              // document.getElementById("main").style.marginLeft = "253px";
+
+              sidebarClosed = false;
+            } else if (!sidebarClosed) {
+              document.getElementById("mySidebar").style.width = "0";
+              // document.getElementById("main").style.marginLeft = "0";
+
+              sidebarClosed = true;
+            }
+          }
+
+    //script.
+    //  $.magneticScroll({
+    //    speed: 1
+    //  });
+
+
+    //script.
+    //
+    //  $(document).ready(function () {
+    //    $("body").niceScroll({
+    //      cursorcolor: "aquamarine",
+    //      cursorwidth: "16px",
+    //      'zindex' : 999999999999999,
+    //      scrollspeed: 1,
+    //      smoothscroll: true,
+    //      mousescrollstep: 38
+    //    });
+    //
+    //
+    //  });
 
 
 

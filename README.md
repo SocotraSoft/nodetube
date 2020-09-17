@@ -7,7 +7,7 @@ You can join the open-source community actively developing NodeTube on [Discord]
 
 <br>
 
-<a href="https://nodetube.live" />
+<a href="https://newtube.app" />
 <img src="https://user-images.githubusercontent.com/7200471/73618225-630e5d80-45e3-11ea-8772-9f10f5b9ef16.png" width="800" >
 
 ## Get Your Instance Running:
@@ -105,13 +105,10 @@ Don't forget to join the open-source community developing NodeTube on [Discord](
 
 ## Live NodeTube Instances
 
-Domain | Registrations Open 
-:---: | :---: 
-https://newtube.app | Yes 
-https://nullvideo.com| Yes 
-https://videoflicktube.com| Yes 
-https://xchtube.com| Yes 
-https://vid8.poal.co| Yes 
+Domain | Registrations Open | Ratings Allowed 
+:---: | :---: | :---: 
+https://newtube.app | Yes | SFW Only
+https://vid8.poal.co| Yes | SFW/NSFW/Sensitive
 
 
 License
