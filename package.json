@@ -109,7 +109,7 @@
     "request-promise": "^4.2.4",
     "rss": "^1.2.2",
     "serve-favicon": "^2.5.0",
-    "shelljs": "^0.7.8",
+    "shelljs": "^0.8.4",
     "stripe": "^4.25.0",
     "tumblr.js": "^1.1.1",
     "twilio": "^3.31.0",
